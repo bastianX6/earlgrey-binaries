@@ -16,6 +16,7 @@ USAGE
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ARTIFACTS_DIR="$ROOT_DIR/artifacts/EarlGrey2"
 DIST_DIR="$ROOT_DIR/dist"
+SOURCE_DIR="$ROOT_DIR/sources/EarlGrey2"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -47,8 +48,14 @@ for required in AppFramework.xcframework TestLib.xcframework versions.txt; do
 done
 
 mkdir -p "$DIST_DIR"
-earlgrey_ref="$(awk '/^EarlGrey2:/ { print $2 }' "$ARTIFACTS_DIR/versions.txt")"
-archive_name="earlgrey2-xcframeworks-${earlgrey_ref}.zip"
+earlgrey_version="$(awk '/^EarlGrey2Version:/ { print $2 }' "$ARTIFACTS_DIR/versions.txt")"
+if [[ -z "$earlgrey_version" && -f "$SOURCE_DIR/EarlGreyTest.podspec" ]]; then
+  earlgrey_version="$(awk -F'"' '/s\.version/ { print $2; exit }' "$SOURCE_DIR/EarlGreyTest.podspec")"
+fi
+if [[ -z "$earlgrey_version" ]]; then
+  earlgrey_version="$(awk '/^EarlGrey2:/ { print $2 }' "$ARTIFACTS_DIR/versions.txt")"
+fi
+archive_name="earlgrey2-xcframeworks-${earlgrey_version}.zip"
 archive_path="$DIST_DIR/$archive_name"
 
 rm -f "$archive_path"

@@ -88,7 +88,7 @@ build_for_sdk() {
     -sdk "$sdk" \
     -configuration Debug \
     OTHER_CFLAGS="$COMMON_OTHER_CFLAGS" \
-    build
+    build | xcbeautify
 
   echo "Building EarlGrey2 TestLib for $sdk..."
   xcodebuild \
@@ -97,7 +97,7 @@ build_for_sdk() {
     -sdk "$sdk" \
     -configuration Debug \
     OTHER_CFLAGS="$COMMON_OTHER_CFLAGS" \
-    build
+    build | xcbeautify
 }
 
 build_for_sdk iphonesimulator
@@ -162,17 +162,24 @@ copy_earlgrey_headers "$HEADERS_DIR/TestLib"
 xcodebuild -create-xcframework \
   -framework "$SIM_BUILD_DIR/AppFramework.framework" \
   -framework "$DEVICE_BUILD_DIR/AppFramework.framework" \
-  -output "$APP_XCFRAMEWORK"
+  -output "$APP_XCFRAMEWORK" | xcbeautify
 
 xcodebuild -create-xcframework \
   -library "$SIM_BUILD_DIR/libTestLib.a" -headers "$HEADERS_DIR/TestLib" \
   -library "$DEVICE_BUILD_DIR/libTestLib.a" -headers "$HEADERS_DIR/TestLib" \
-  -output "$TEST_XCFRAMEWORK"
+  -output "$TEST_XCFRAMEWORK" | xcbeautify
 
 rm -rf "$HEADERS_DIR"
 
+earlgrey_commit="$(git -C "$SOURCE_DIR" rev-parse HEAD)"
+earlgrey_version="$(awk -F'"' '/s\.version/ { print $2; exit }' "$SOURCE_DIR/EarlGreyTest.podspec")"
+if [[ -z "$earlgrey_version" ]]; then
+  earlgrey_version="$(git -C "$SOURCE_DIR" describe --tags --abbrev=0)"
+fi
+
 cat > "$OUTPUT_DIR/versions.txt" <<VERSIONS
-EarlGrey2: $(git -C "$SOURCE_DIR" rev-parse HEAD)
+EarlGrey2: $earlgrey_commit
+EarlGrey2Version: $earlgrey_version
 eDistantObject: $(git -C "$SOURCE_DIR/Submodules/eDistantObject" rev-parse HEAD)
 VERSIONS
 

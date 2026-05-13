@@ -41,23 +41,23 @@ This creates a zip and SHA-256 file under `dist/`, ready to attach to a GitHub R
 You can publish directly with the GitHub CLI:
 
 ```bash
-scripts/publish_github_release.sh --tag earlgrey2-cd2f3c2769b10342d2cf0f7f0a2723c47b997524 --title "EarlGrey2 cd2f3c2769b10342d2cf0f7f0a2723c47b997524"
+scripts/publish_github_release.sh
 ```
 
 If the local git remote does not resolve to the target GitHub repository, pass it explicitly:
 
 ```bash
-scripts/publish_github_release.sh --repo OWNER/earlgrey-binaries --tag earlgrey2-cd2f3c2769b10342d2cf0f7f0a2723c47b997524
+scripts/publish_github_release.sh --repo OWNER/earlgrey-binaries
 ```
 
-Use `--skip-build` to publish the existing files in `artifacts/` and `dist/` without rebuilding.
+By default, the release tag is the EarlGrey version declared by the pinned source (`2.2.2` for the current pin). Pass `--tag` only when you intentionally need a different release name. Use `--skip-build` to publish the existing files in `artifacts/` and `dist/` without rebuilding.
 
 ## Bitrise Shape
 
 A Bitrise workflow can run these steps:
 
 ```bash
-scripts/publish_github_release.sh --repo OWNER/earlgrey-binaries --tag "$BITRISE_GIT_TAG"
+scripts/publish_github_release.sh --repo OWNER/earlgrey-binaries
 ```
 
 Configure `GITHUB_TOKEN` or `GH_TOKEN` in Bitrise with permission to create releases and upload assets. If you want Bitrise to build on every commit but publish only on tags, gate this step with Bitrise's tag trigger or a small shell condition around `BITRISE_GIT_TAG`.

@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/publish_github_release.sh --tag <tag> [--title <title>] [--repo <owner/name>] [--draft] [--prerelease] [--skip-build]
+  scripts/publish_github_release.sh [--tag <tag>] [--title <title>] [--repo <owner/name>] [--draft] [--prerelease] [--skip-build]
 
 Builds and packages the EarlGrey2 XCFrameworks, then uploads the zip and
 SHA-256 file to a GitHub Release using the GitHub CLI.
@@ -60,12 +60,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$TAG" ]]; then
-  echo "Missing --tag." >&2
-  usage >&2
-  exit 2
-fi
-
 if ! command -v gh >/dev/null 2>&1; then
   echo "GitHub CLI is required: https://cli.github.com" >&2
   exit 1
@@ -96,6 +90,17 @@ if [[ -z "$archive_path" || -z "$checksum_path" ]]; then
   echo "Could not resolve packaged release assets." >&2
   printf '%s\n' "$package_output" >&2
   exit 1
+fi
+
+if [[ -z "$TAG" ]]; then
+  TAG="$(awk '/^EarlGrey2Version:/ { print $2 }' "$ROOT_DIR/artifacts/EarlGrey2/versions.txt")"
+  if [[ -z "$TAG" && -f "$ROOT_DIR/sources/EarlGrey2/EarlGreyTest.podspec" ]]; then
+    TAG="$(awk -F'"' '/s\.version/ { print $2; exit }' "$ROOT_DIR/sources/EarlGrey2/EarlGreyTest.podspec")"
+  fi
+  if [[ -z "$TAG" ]]; then
+    echo "Missing --tag and could not read EarlGrey2Version from artifacts/EarlGrey2/versions.txt." >&2
+    exit 2
+  fi
 fi
 
 if [[ -z "$TITLE" ]]; then
