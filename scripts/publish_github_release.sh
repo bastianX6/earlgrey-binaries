@@ -75,9 +75,15 @@ if [[ "$SKIP_BUILD" != true ]]; then
   "$ROOT_DIR/scripts/build_xcframeworks.sh" --force
 fi
 
-mapfile -t package_outputs < <("$ROOT_DIR/scripts/package_release.sh")
-archive_path="${package_outputs[0]}"
-checksum_path="${package_outputs[1]}"
+package_output="$("$ROOT_DIR/scripts/package_release.sh")"
+archive_path="$(printf '%s\n' "$package_output" | sed -n '1p')"
+checksum_path="$(printf '%s\n' "$package_output" | sed -n '2p')"
+
+if [[ -z "$archive_path" || -z "$checksum_path" ]]; then
+  echo "Could not resolve packaged release assets." >&2
+  printf '%s\n' "$package_output" >&2
+  exit 1
+fi
 
 if [[ -z "$TITLE" ]]; then
   TITLE="$TAG"
