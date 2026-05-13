@@ -71,6 +71,19 @@ if ! command -v gh >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ -n "${GH_TOKEN:-}" || -n "${GITHUB_TOKEN:-}" ]]; then
+  echo "GH_TOKEN or GITHUB_TOKEN is set. GitHub CLI gives environment tokens precedence over the keychain token." >&2
+  echo "If this token does not include repo/workflow permissions, unset it or replace it before publishing." >&2
+fi
+
+oauth_scopes="$(gh api -i /user --silent 2>&1 | awk 'BEGIN { IGNORECASE = 1 } /^X-Oauth-Scopes:/ { print $0 }')"
+if [[ "$oauth_scopes" != *repo* || "$oauth_scopes" != *workflow* ]]; then
+  echo "The active GitHub token does not appear to have both repo and workflow scopes." >&2
+  echo "Observed scopes: ${oauth_scopes:-unknown}" >&2
+  echo "Run: gh auth refresh -h github.com -s repo -s workflow" >&2
+  exit 1
+fi
+
 if [[ "$SKIP_BUILD" != true ]]; then
   "$ROOT_DIR/scripts/build_xcframeworks.sh" --force
 fi
