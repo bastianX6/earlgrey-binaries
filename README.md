@@ -22,12 +22,11 @@ Outputs are written to `artifacts/EarlGrey2/`:
 
 - `AppFramework.xcframework`
 - `TestLib.xcframework`
-- `CommonLib.xcframework`
 - `versions.txt`
 
-`TestLib.xcframework` and `CommonLib.xcframework` contain iOS device and simulator slices. The simulator slice is `ios-arm64_x86_64-simulator`; it is intentionally separate from the device `ios-arm64` slice because simulator `arm64` and device `arm64` are different platforms.
+`TestLib.xcframework` contains iOS device and simulator slices. The simulator slice is `ios-arm64_x86_64-simulator`; it is intentionally separate from the device `ios-arm64` slice because simulator `arm64` and device `arm64` are different platforms.
 
-The static-library headers include both the original EarlGrey directory layout and a flat header layer. EarlGrey public headers mix imports such as `"TestLib/EarlGrey.h"`, `"AppFramework/Action/GREYAction.h"`, and unqualified imports like `"GREYDiagnosable.h"`, so both layouts are required for Swift bridging headers.
+The EarlGrey test headers are packaged inside `TestLib.xcframework` in each slice. They include both the original EarlGrey directory layout and a flat header layer. EarlGrey public headers mix imports such as `"TestLib/EarlGrey.h"`, `"AppFramework/Action/GREYAction.h"`, and unqualified imports like `"GREYDiagnosable.h"`, so both layouts are required for Swift bridging headers. There is no separate top-level headers artifact to copy into consumers.
 
 ## Package Release Asset
 
@@ -37,16 +36,31 @@ scripts/package_release.sh
 
 This creates a zip and SHA-256 file under `dist/`, ready to attach to a GitHub Release.
 
+## Publish From Local
+
+You can publish directly with the GitHub CLI:
+
+```bash
+scripts/publish_github_release.sh --tag earlgrey2-cd2f3c2769b10342d2cf0f7f0a2723c47b997524 --title "EarlGrey2 cd2f3c2769b10342d2cf0f7f0a2723c47b997524"
+```
+
+If the local git remote does not resolve to the target GitHub repository, pass it explicitly:
+
+```bash
+scripts/publish_github_release.sh --repo OWNER/earlgrey-binaries --tag earlgrey2-cd2f3c2769b10342d2cf0f7f0a2723c47b997524
+```
+
+Use `--skip-build` to publish the existing files in `artifacts/` and `dist/` without rebuilding.
+
 ## Bitrise Shape
 
 A Bitrise workflow can run these steps:
 
 ```bash
-scripts/build_xcframeworks.sh --force
-scripts/package_release.sh
+scripts/publish_github_release.sh --repo OWNER/earlgrey-binaries --tag "$BITRISE_GIT_TAG"
 ```
 
-Then upload `dist/earlgrey2-xcframeworks-*.zip` and the matching `.sha256` file to the GitHub Release. Keep release publishing outside this script so CI credentials and release policy stay in Bitrise/GitHub configuration.
+Configure `GITHUB_TOKEN` or `GH_TOKEN` in Bitrise with permission to create releases and upload assets. If you want Bitrise to build on every commit but publish only on tags, gate this step with Bitrise's tag trigger or a small shell condition around `BITRISE_GIT_TAG`.
 
 ## Consumer Notes
 
@@ -56,8 +70,7 @@ The expected consumer layout is:
 Libs/EarlGrey2/
   AppFramework.xcframework
   TestLib.xcframework
-  CommonLib.xcframework
   versions.txt
 ```
 
-The MultiviewTV Tuist integration currently links `AppFramework.xcframework` into the EarlGrey host app and `TestLib.xcframework` into the EarlGrey UI test bundle.
+The MultiviewTV Tuist integration links `AppFramework.xcframework` into the EarlGrey host app and `TestLib.xcframework` into the EarlGrey UI test bundle.

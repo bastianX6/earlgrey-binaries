@@ -9,7 +9,6 @@ Usage:
 Builds pinned EarlGrey2 sources into XCFramework artifacts:
   AppFramework.xcframework
   TestLib.xcframework
-  CommonLib.xcframework
 
 The default source checkout path is sources/EarlGrey2 and the default output
 path is artifacts/EarlGrey2.
@@ -54,8 +53,7 @@ done
 
 APP_XCFRAMEWORK="$OUTPUT_DIR/AppFramework.xcframework"
 TEST_XCFRAMEWORK="$OUTPUT_DIR/TestLib.xcframework"
-COMMON_XCFRAMEWORK="$OUTPUT_DIR/CommonLib.xcframework"
-HEADERS_DIR="$OUTPUT_DIR/Headers"
+HEADERS_DIR="$OUTPUT_DIR/.headers"
 
 if [[ "$SKIP_CHECKOUT" != true ]]; then
   checkout_args=(--source-dir "$SOURCE_DIR")
@@ -71,7 +69,7 @@ if [[ ! -d "$SOURCE_DIR" ]]; then
   exit 1
 fi
 
-if [[ "$FORCE" != true && -d "$APP_XCFRAMEWORK" && -d "$TEST_XCFRAMEWORK" && -d "$COMMON_XCFRAMEWORK" ]]; then
+if [[ "$FORCE" != true && -d "$APP_XCFRAMEWORK" && -d "$TEST_XCFRAMEWORK" ]]; then
   echo "EarlGrey2 XCFrameworks already exist at '$OUTPUT_DIR'. Use --force to rebuild."
   exit 0
 fi
@@ -118,8 +116,8 @@ for required in \
   fi
 done
 
-rm -rf "$APP_XCFRAMEWORK" "$TEST_XCFRAMEWORK" "$COMMON_XCFRAMEWORK" "$HEADERS_DIR"
-mkdir -p "$OUTPUT_DIR" "$HEADERS_DIR/TestLib" "$HEADERS_DIR/CommonLib"
+rm -rf "$APP_XCFRAMEWORK" "$TEST_XCFRAMEWORK" "$OUTPUT_DIR/CommonLib.xcframework" "$OUTPUT_DIR/Headers" "$HEADERS_DIR"
+mkdir -p "$OUTPUT_DIR" "$HEADERS_DIR/TestLib"
 
 copy_header_tree() {
   local source_dir="$1"
@@ -160,7 +158,6 @@ copy_earlgrey_headers() {
 }
 
 copy_earlgrey_headers "$HEADERS_DIR/TestLib"
-rsync -a --delete "$HEADERS_DIR/TestLib/" "$HEADERS_DIR/CommonLib/"
 
 xcodebuild -create-xcframework \
   -framework "$SIM_BUILD_DIR/AppFramework.framework" \
@@ -172,10 +169,7 @@ xcodebuild -create-xcframework \
   -library "$DEVICE_BUILD_DIR/libTestLib.a" -headers "$HEADERS_DIR/TestLib" \
   -output "$TEST_XCFRAMEWORK"
 
-xcodebuild -create-xcframework \
-  -library "$SIM_BUILD_DIR/libCommonLib.a" -headers "$HEADERS_DIR/CommonLib" \
-  -library "$DEVICE_BUILD_DIR/libCommonLib.a" -headers "$HEADERS_DIR/CommonLib" \
-  -output "$COMMON_XCFRAMEWORK"
+rm -rf "$HEADERS_DIR"
 
 cat > "$OUTPUT_DIR/versions.txt" <<VERSIONS
 EarlGrey2: $(git -C "$SOURCE_DIR" rev-parse HEAD)

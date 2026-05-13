@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-for required in AppFramework.xcframework TestLib.xcframework CommonLib.xcframework versions.txt; do
+for required in AppFramework.xcframework TestLib.xcframework versions.txt; do
   if [[ ! -e "$ARTIFACTS_DIR/$required" ]]; then
     echo "Missing artifact: $ARTIFACTS_DIR/$required" >&2
     exit 1
