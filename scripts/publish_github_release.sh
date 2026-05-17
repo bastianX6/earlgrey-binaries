@@ -93,12 +93,12 @@ if [[ -z "$archive_path" || -z "$checksum_path" ]]; then
 fi
 
 if [[ -z "$TAG" ]]; then
-  TAG="$(awk '/^EarlGrey2Version:/ { print $2 }' "$ROOT_DIR/artifacts/EarlGrey2/versions.txt")"
-  if [[ -z "$TAG" && -f "$ROOT_DIR/sources/EarlGrey2/EarlGreyTest.podspec" ]]; then
-    TAG="$(awk -F'"' '/s\.version/ { print $2; exit }' "$ROOT_DIR/sources/EarlGrey2/EarlGreyTest.podspec")"
+  TAG="$(awk '/^ReleaseVersion:/ { print $2 }' "$ROOT_DIR/artifacts/EarlGrey2/versions.txt")"
+  if [[ -z "$TAG" && -f "$ROOT_DIR/VERSION" ]]; then
+    TAG="$(awk 'NF { print $1; exit }' "$ROOT_DIR/VERSION")"
   fi
   if [[ -z "$TAG" ]]; then
-    echo "Missing --tag and could not read EarlGrey2Version from artifacts/EarlGrey2/versions.txt." >&2
+    echo "Missing --tag and could not read ReleaseVersion from artifacts/EarlGrey2/versions.txt or VERSION." >&2
     exit 2
   fi
 fi
